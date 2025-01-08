@@ -1,8 +1,13 @@
 {
   "name": "multimodal-live-api-web-console",
   "version": "0.1.0",
-  "main": "build/electron/main.js",
+  "description": "A multimodal live API web console application",
+  "author": {
+    "name": "Sahil Marwaha"
+  },
+  "main": "./build/electron/main.js",
   "dependencies": {
+    "@parcel/watcher": "^2.1.0",
     "classnames": "^2.5.1",
     "dotenv-flow": "^4.1.0",
     "eventemitter3": "^5.0.1",
@@ -25,19 +30,74 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
+    "build:react": "cross-env PUBLIC_URL=./ react-scripts build",
     "electron:tsc": "tsc -p electron/tsconfig.json",
     "electron-dev": "npm run electron:tsc && concurrently \"cross-env BROWSER=none npm start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .\"",
-    "electron-build": "npm run build && npm run electron:tsc && electron-builder",
-    "electron-pack": "electron-builder -c.extraMetadata.main=build/electron/main.js"
+    "electron-build": "npm run build:react && npm run electron:tsc && electron-builder",
+    "electron-pack": "electron-builder"
   },
   "build": {
     "appId": "com.multimodal.live.api.console",
+    "productName": "Multimodal Live API Web Console",
     "files": [
       "build/**/*",
-      "node_modules/**/*"
+      "electron/**/*",
+      "package.json"
     ],
     "directories": {
-      "buildResources": "assets"
+      "buildResources": "assets",
+      "output": "dist"
+    },
+    "extraMetadata": {
+      "main": "./build/electron/main.js"
+    },
+    "asar": true,
+    "asarUnpack": [
+      "build/**/*"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Development"
     }
   },
   "eslintConfig": {
@@ -59,6 +119,7 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@google/generative-ai": "^0.21.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -74,10 +135,10 @@
     "electron": "^33.3.1",
     "electron-builder": "^25.1.8",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.3",
+    "typescript": "5.1.6",
     "wait-on": "^8.0.1"
   },
   "overrides": {
-    "typescript": "^5.6.3"
+    "typescript": "5.1.6"
   }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import Select from 'react-select';
 import "./App.scss";
 import { LiveAPIProvider } from "./contexts/LiveAPIContext";
@@ -38,18 +38,80 @@ const modes = [
 ];
 
 function App() {
-  // this video reference is used for displaying the active stream, whether that is the webcam or screen capture
-  // feel free to style as you see fit
   const videoRef = useRef<HTMLVideoElement>(null);
-  // either the screen capture, the video or null, if null we hide it
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [selectedOption, setSelectedOption] = useState({ value: 'general', label: 'General' });
+  const [apiKey, setApiKey] = useState<string>(() => {
+    return localStorage.getItem("gemini_api_key") || "";
+  });
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [tempApiKey, setTempApiKey] = useState(apiKey);
+
+  useEffect(() => {
+    if (apiKey) {
+      localStorage.setItem("gemini_api_key", apiKey);
+    }
+  }, [apiKey]);
+
+  const handleApiKeySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (tempApiKey.trim()) {
+      setApiKey(tempApiKey.trim());
+      setShowApiKeyInput(false);
+    }
+  };
 
   return (
     <div className="App">
-      <LiveAPIProvider url={uri} apiKey={API_KEY}>
+      <LiveAPIProvider url={uri} apiKey={apiKey}>
         <div className="streaming-console">
-          {/* <SidePanel /> */}
+          <button
+            className="action-button api-key-button"
+            onClick={() => {
+              setTempApiKey(apiKey);
+              setShowApiKeyInput(!showApiKeyInput);
+            }}
+            title="Configure API Key"
+          >
+            <span className="material-symbols-outlined">key</span>
+          </button>
+
+          {showApiKeyInput && (
+            <>
+              <div className="modal-backdrop" onClick={() => setShowApiKeyInput(false)} />
+              <div className="api-key-modal">
+                <form onSubmit={handleApiKeySubmit}>
+                  <input
+                    type="password"
+                    placeholder="Enter your API key"
+                    value={tempApiKey}
+                    onChange={(e) => setTempApiKey(e.target.value)}
+                    style={{ 
+                      textAlign: 'center',
+                      direction: 'ltr',
+                      padding: '12px 0'
+                    }}
+                    className="api-key-input"
+                  />
+                  <div className="api-key-actions">
+                    <button type="button" onClick={() => setShowApiKeyInput(false)}>
+                      Cancel
+                    </button>
+                    <button type="submit" disabled={!tempApiKey.trim()}>
+                      Save
+                    </button>
+                  </div>
+                </form>
+                <p>
+                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">
+                    Get API key
+                  </a>
+                </p>
+              </div>
+            </>
+          )}
+
+          <SidePanel />
           <main>
             <div className="main-app-area">
               {selectedOption.value === 'general' ? <Subtitles /> : <></>}

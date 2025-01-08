@@ -139,3 +139,17 @@ Run the following commands to run the electron app:
 npm install
 npm run electron-dev
 ```
+
+## Building the electron app
+
+_Note: I had to install `xcode` to get this to work, since it required the `unordered_map` cpp header file. The xcode-select cli tool was not enough._
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate && python3 -m pip install setuptools
+npm run electron-build
+```
+
+## TODO
+
+- [ ] Allow users to specify their api key in the app
+- [ ] Check if .env.production can be safely removed

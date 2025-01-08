@@ -46,7 +46,7 @@ function OnlySubtitlesComponent() {
     setConfig({
       model: "models/gemini-2.0-flash-exp",
       generationConfig: {
-        responseModalities: ["audio"],
+        responseModalities: "audio",
         speechConfig: {
           voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } },
         },
