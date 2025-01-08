@@ -113,7 +113,20 @@
   align-items: flex-start;
   gap: 8px;
   padding-bottom: 18px;
-
+  .carousel-container{
+    .carousel-button{
+      border: none;
+      opacity: 0.5;
+      outline: none;
+      color: gray;
+    }
+    .carousel-button:hover{
+      border: none;
+      opacity: 1;
+      outline: none;
+      color: white;
+    }
+  }
   .disabled .action-button,
   .action-button.disabled {
     background: rgba(0, 0, 0, 0);

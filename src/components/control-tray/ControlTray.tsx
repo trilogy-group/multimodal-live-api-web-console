@@ -25,12 +25,15 @@ import { AudioRecorder } from "../../lib/audio-recorder";
 import AudioPulse from "../audio-pulse/AudioPulse";
 import "./control-tray.scss";
 
-export type ControlTrayProps = {
+export interface ControlTrayProps {
   videoRef: RefObject<HTMLVideoElement>;
-  children?: ReactNode;
   supportsVideo: boolean;
-  onVideoStreamChange?: (stream: MediaStream | null) => void;
-};
+  onVideoStreamChange: (stream: MediaStream | null) => void;
+  modes: { value: string; label: string }[];
+  selectedOption: { value: string; label: string };
+  setSelectedOption: (option: { value: string; label: string }) => void;
+  children?: ReactNode;
+}
 
 type MediaStreamButtonProps = {
   isStreaming: boolean;
@@ -59,8 +62,11 @@ const MediaStreamButton = memo(
 function ControlTray({
   videoRef,
   children,
-  onVideoStreamChange = () => {},
+  onVideoStreamChange = () => { },
   supportsVideo,
+  modes,
+  selectedOption,
+  setSelectedOption,
 }: ControlTrayProps) {
   const videoStreams = [useWebcam(), useScreenCapture()];
   const [activeVideoStream, setActiveVideoStream] =
@@ -71,6 +77,7 @@ function ControlTray({
   const [muted, setMuted] = useState(false);
   const renderCanvasRef = useRef<HTMLCanvasElement>(null);
   const connectButtonRef = useRef<HTMLButtonElement>(null);
+  const [carouselIndex, setCarouselIndex] = useState(0);
 
   const { client, connected, connect, disconnect, volume } =
     useLiveAPIContext();
@@ -156,45 +163,93 @@ function ControlTray({
     videoStreams.filter((msr) => msr !== next).forEach((msr) => msr.stop());
   };
 
-  return (
+  // Update carousel index and selected option
+  useEffect(() => {
+    setSelectedOption(modes[carouselIndex]);
+  }, [carouselIndex, modes, setSelectedOption]);
+
+  const handleCarouselChange = (direction: 'next' | 'prev') => {
+    setCarouselIndex(prevIndex => {
+      const newIndex = direction === 'next' 
+        ? (prevIndex + 1) % modes.length
+        : (prevIndex - 1 + modes.length) % modes.length;
+      return newIndex;
+    });
+  };
+
+  return (<>
     <section className="control-tray">
-      <canvas style={{ display: "none" }} ref={renderCanvasRef} />
-      <nav className={cn("actions-nav", { disabled: !connected })}>
-        <button
-          className={cn("action-button mic-button")}
-          onClick={() => setMuted(!muted)}
-        >
-          {!muted ? (
-            <span className="material-symbols-outlined filled">mic</span>
-          ) : (
-            <span className="material-symbols-outlined filled">mic_off</span>
+      {/* <canvas style={{ display: "none" }} ref={renderCanvasRef} /> */}
+      <div className="control-tray-container">
+        <nav className={cn("actions-nav", { disabled: !connected })}>
+          <button
+            className={cn("action-button mic-button")}
+            onClick={() => setMuted(!muted)}
+          >
+            {!muted ? (
+              <span className="material-symbols-outlined filled">mic</span>
+            ) : (
+              <span className="material-symbols-outlined filled">mic_off</span>
+            )}
+          </button>
+
+          <div className="action-button no-action outlined">
+            <AudioPulse volume={volume} active={connected} hover={false} />
+          </div>
+
+          {supportsVideo && (
+            <>
+              <MediaStreamButton
+                isStreaming={screenCapture.isStreaming}
+                start={changeStreams(screenCapture)}
+                stop={changeStreams()}
+                onIcon="cancel_presentation"
+                offIcon="present_to_all"
+              />
+              <MediaStreamButton
+                isStreaming={webcam.isStreaming}
+                start={changeStreams(webcam)}
+                stop={changeStreams()}
+                onIcon="videocam_off"
+                offIcon="videocam"
+              />
+            </>
           )}
-        </button>
+          {children}
+        </nav>
+        <div className="carousel-container" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: 'auto', width: '100%' }}>
+          <button
+            className="carousel-button action-button"
+            onClick={() => handleCarouselChange('prev')}
+            style={{ 
+              position: 'relative',
+              width: '15%',
+              height: '32px',
+              background: 'transparent',
+            }}
+          >
+            <span className="material-symbols-outlined">chevron_left</span>
+          </button>
 
-        <div className="action-button no-action outlined">
-          <AudioPulse volume={volume} active={connected} hover={false} />
+          <div className="carousel-content" style={{ width: '70%', textAlign: 'center', justifyContent: 'center' }}>
+            <div className="carousel-slide">
+              <span className="carousel-text">{selectedOption.label}</span>
+            </div>
+          </div>
+
+          <button
+            className="carousel-button action-button"
+            onClick={() => handleCarouselChange('next')}
+            style={{ 
+              width: '15%',
+              height: '32px',
+              background: 'transparent', 
+            }}
+          >
+            <span className="material-symbols-outlined">chevron_right</span>
+          </button>
         </div>
-
-        {supportsVideo && (
-          <>
-            <MediaStreamButton
-              isStreaming={screenCapture.isStreaming}
-              start={changeStreams(screenCapture)}
-              stop={changeStreams()}
-              onIcon="cancel_presentation"
-              offIcon="present_to_all"
-            />
-            <MediaStreamButton
-              isStreaming={webcam.isStreaming}
-              start={changeStreams(webcam)}
-              stop={changeStreams()}
-              onIcon="videocam_off"
-              offIcon="videocam"
-            />
-          </>
-        )}
-        {children}
-      </nav>
+      </div>
 
       <div className={cn("connection-container", { connected })}>
         <div className="connection-button-container">
@@ -210,7 +265,10 @@ function ControlTray({
         </div>
         <span className="text-indicator">Streaming</span>
       </div>
+
+
     </section>
+  </>
   );
 }
 
