@@ -35,7 +35,7 @@ function SubtitlesComponent({ tools, systemInstruction }: SubtitlesProps) {
 
   useEffect(() => {
     const onToolCall = async (toolCall: ToolCall) => {
-      console.log(`got toolcall`, toolCall);
+      console.log(`got toolcall`, JSON.stringify(toolCall));
       let hasResponded = false;
       for (const fc of toolCall.functionCalls) {
         if (fc.name === "render_subtitles") {
@@ -50,6 +50,27 @@ function SubtitlesComponent({ tools, systemInstruction }: SubtitlesProps) {
         } else if (fc.name === "write_text") {
           const content = (fc.args as any).content;
           ipcRenderer.send('write-text', content);
+        } else if (fc.name === "list_windows") {
+          const windows = await ipcRenderer.invoke('list-windows');
+          client.sendToolResponse({
+            functionResponses: toolCall.functionCalls.map((fc) => ({
+              response: { output: { success: true } },
+              id: fc.id,
+            })),
+          });
+          client.send([{ text: `Here are the open windows: ${JSON.stringify(windows)}` }]);
+          hasResponded = true;
+        } else if (fc.name === "focus_window") {
+          const args = fc.args as { window_id: string };
+          const success = await ipcRenderer.invoke('focus-window', args.window_id);
+          client.sendToolResponse({
+            functionResponses: toolCall.functionCalls.map((fc) => ({
+              response: { output: { success: true } },
+              id: fc.id,
+            })),
+          });
+          client.send([{ text: success ? "Successfully focused the window" : "Failed to focus the window" }]);
+          hasResponded = true;
         } else if (fc.name === "read_text") {
           const selectedText = await ipcRenderer.invoke('read-selection');
           console.log("selectedText received", selectedText);

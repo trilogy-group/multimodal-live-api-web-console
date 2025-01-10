@@ -73,11 +73,37 @@ export const readWriteTools: Tool[] = [
   },
 ]
 
+export const windowTools: Tool[] = [
+  {
+    functionDeclarations: [
+      
+      {
+        name: "list_windows",
+        description: "Lists all open windows in the system with their details including ID, title, and focus state.",
+      },
+      {
+        name: "focus_window",
+        description: "Brings a specific window to the front and gives it focus.",
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            window_id: {
+              type: SchemaType.STRING,
+              description: "The ID of the window to focus (in the format 'window:NUMBER:0', as returned by list_windows)",
+            },
+          },
+          required: ["window_id"],
+        },
+      },
+    ],
+  },
+];
+
 // Mode-based configurations
 export const assistantConfigs = {
   daily_helper: {
     display_name: "Daily Helper",
-    tools: [...translationTools, ...graphingTools, ...readWriteTools],
+    tools: [...translationTools, ...graphingTools, ...readWriteTools, ...windowTools],
     systemInstruction: 'You are a helpful assistant with the following capabilities:\n1. Translation: When asked to translate text, use "render_subtitles" to show the translation and "remove_subtitles" when done.\n2. Graphing: When asked to create a graph or visualization, use the "render_graph" function with a Vega-Lite specification. Make your best judgment about the visualization type.\n3. Reading and Writing: Use the "read_text" and "write_text" functions to interact with the user\'s text and writing.\nWhen invoking a tool or function, make sure you don\'t include anything else other than the invocation itself.'
   },
   translator: {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { createContext, FC, ReactNode, useContext } from "react";
+import { createContext, FC, ReactNode, useContext, useCallback } from "react";
 import { useLiveAPI, UseLiveAPIResults } from "../hooks/use-live-api";
 
 const LiveAPIContext = createContext<UseLiveAPIResults | undefined>(undefined);

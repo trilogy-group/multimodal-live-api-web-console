@@ -314,6 +314,69 @@ ipcMain.on('write-text', async (event, content) => {
   }
 });
 
+// Add these new IPC handlers before app.on('ready', ...)
+ipcMain.handle('list-windows', async () => {
+  const sources = await desktopCapturer.getSources({
+    types: ['window'],
+    thumbnailSize: { width: 0, height: 0 }  // Set to 0 for better performance since we don't need thumbnails
+  });
+  
+  return sources.map(source => ({
+    id: source.id,
+    title: source.name,
+    display_id: source.display_id,
+    appIcon: source.appIcon
+  }));
+});
+
+ipcMain.handle('focus-window', async (event, windowId: string) => {
+  try {
+    if (process.platform === 'darwin') {
+      // First get the window details to get its title
+      const sources = await desktopCapturer.getSources({
+        types: ['window'],
+        thumbnailSize: { width: 0, height: 0 }
+      });
+      
+      const targetWindow = sources.find(source => source.id === windowId);
+      if (!targetWindow) {
+        console.error('Window not found:', windowId);
+        return false;
+      }
+
+      const { exec } = require('child_process');
+      // Escape any double quotes in the window title
+      const escapedTitle = targetWindow.name.replace(/"/g, '\\"');
+      const script = `
+        tell application "System Events"
+          set targetWindow to "${escapedTitle}"
+          repeat with p in processes
+            if exists (window 1 of p whose name contains targetWindow) then
+              set frontmost of p to true
+              return
+            end if
+          end repeat
+        end tell
+      `;
+      
+      return new Promise((resolve) => {
+        exec(`osascript -e '${script}'`, (error: any) => {
+          if (error) {
+            console.error('Error focusing window:', error);
+            resolve(false);
+          } else {
+            resolve(true);
+          }
+        });
+      });
+    }
+    return false;
+  } catch (error) {
+    console.error('Error focusing window:', error);
+    return false;
+  }
+});
+
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {

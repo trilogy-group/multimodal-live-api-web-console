@@ -124,7 +124,11 @@
     ]
   },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@babel/core": "7.22.5",
+    "@babel/eslint-parser": "7.22.5",
+    "@babel/plugin-proposal-private-property-in-object": "7.21.11",
+    "@babel/plugin-transform-private-property-in-object": "^7.25.9",
+    "@babel/preset-env": "7.22.5",
     "@electron/rebuild": "^3.7.1",
     "@google/generative-ai": "^0.21.0",
     "@testing-library/jest-dom": "^5.17.0",
